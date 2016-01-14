@@ -492,6 +492,7 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 					var _processingPaste = false;
 					/* istanbul ignore next: phantom js cannot test this for some reason */
 					var processpaste = function(text) {
+						var fromMSWord = text.indexOf('Word.Document') != -1;
 						/* istanbul ignore else: don't care if nothing pasted */
 						if(text && text.trim().length){
 							// test paste from word/microsoft product
@@ -636,7 +637,11 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 									result += '&nbsp;';
 								}
 								return result;
-							}).replace(/\n|\r\n|\r/g, '<br />').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+							}).replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+
+							if(!fromMSWord){
+								text = text.replace(/\n|\r\n|\r/g, '<br />');
+							}
 
 							if(_pasteHandler) text = _pasteHandler(scope, {$html: text}) || text;
 
