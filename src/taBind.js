@@ -493,6 +493,7 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 					/* istanbul ignore next: phantom js cannot test this for some reason */
 					var processpaste = function(text) {
 						var fromMSWord = text.indexOf('Word.Document') !== -1;
+            var fromHTML = text.toLowerCase().indexOf('<html') !== -1;
 						/* istanbul ignore else: don't care if nothing pasted */
 						if(text && text.trim().length){
 							// test paste from word/microsoft product
@@ -500,101 +501,29 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 								var textFragment = text.match(/<!--StartFragment-->([\s\S]*?)<!--EndFragment-->/i);
 								if(!textFragment) textFragment = text;
 								else textFragment = textFragment[1];
-								textFragment = textFragment.replace(/<o:p>[\s\S]*?<\/o:p>/ig, '').replace(/class=(["']|)MsoNormal(["']|)/ig, '');
-								var dom = angular.element("<div>" + textFragment + "</div>");
-								var targetDom = angular.element("<div></div>");
-								var _list = {
-									element: null,
-									lastIndent: [],
-									lastLi: null,
-									isUl: false
-								};
-								_list.lastIndent.peek = function(){
-									var n = this.length;
-									if (n>0) return this[n-1];
-								};
-								var _resetList = function(isUl){
-									_list.isUl = isUl;
-									_list.element = angular.element(isUl ? "<ul>" : "<ol>");
-									_list.lastIndent = [];
-									_list.lastIndent.peek = function(){
-										var n = this.length;
-										if (n>0) return this[n-1];
-									};
-									_list.lastLevelMatch = null;
-								};
-								for(var i = 0; i <= dom[0].childNodes.length; i++){
-									if(!dom[0].childNodes[i] || dom[0].childNodes[i].nodeName === "#text"){
-										continue;
-									} else {
-										var tagName = dom[0].childNodes[i].tagName.toLowerCase();
-										if(tagName !== "p" && tagName !== "h1" && tagName !== "h2" && tagName !== "h3" && tagName !== "h4" && tagName !== "h5" && tagName !== "h6"){
-											continue;
-										}
-									}
-									var el = angular.element(dom[0].childNodes[i]);
-									var _listMatch = (el.attr('class') || '').match(/MsoList(Bullet|Number|Paragraph)(CxSp(First|Middle|Last)|)/i);
-
-									if(_listMatch){
-										if(el[0].childNodes.length < 2 || el[0].childNodes[1].childNodes.length < 1){
-											continue;
-										}
-										var isUl = _listMatch[1].toLowerCase() === "bullet" || (_listMatch[1].toLowerCase() !== "number" && !(/^[^0-9a-z<]*[0-9a-z]+[^0-9a-z<>]</i.test(el[0].childNodes[1].innerHTML) || /^[^0-9a-z<]*[0-9a-z]+[^0-9a-z<>]</i.test(el[0].childNodes[1].childNodes[0].innerHTML)));
-										var _indentMatch = (el.attr('style') || '').match(/margin-left:([\-\.0-9]*)/i);
-										var indent = parseFloat((_indentMatch)?_indentMatch[1]:0);
-										var _levelMatch = (el.attr('style') || '').match(/mso-list:l([0-9]+) level([0-9]+) lfo[0-9+]($|;)/i);
-										// prefers the mso-list syntax
-
-										if(_levelMatch && _levelMatch[2]) indent = parseInt(_levelMatch[2]);
-
-										if ((_levelMatch && (!_list.lastLevelMatch || _levelMatch[1] !== _list.lastLevelMatch[1])) || !_listMatch[3] || _listMatch[3].toLowerCase() === "first" || (_list.lastIndent.peek() === null) || (_list.isUl !== isUl && _list.lastIndent.peek() === indent)) {
-											_resetList(isUl);
-											targetDom.append(_list.element);
-										} else if (_list.lastIndent.peek() != null && _list.lastIndent.peek() < indent){
-											_list.element = angular.element(isUl ? "<ul>" : "<ol>");
-											_list.lastLi.append(_list.element);
-										} else if (_list.lastIndent.peek() != null && _list.lastIndent.peek() > indent){
-											while(_list.lastIndent.peek() != null && _list.lastIndent.peek() > indent){
-												if(_list.element.parent()[0].tagName.toLowerCase() === 'li'){
-													_list.element = _list.element.parent();
-													continue;
-												}else if(/[uo]l/i.test(_list.element.parent()[0].tagName.toLowerCase())){
-													_list.element = _list.element.parent();
-												}else{ // else it's it should be a sibling
-													break;
-												}
-												_list.lastIndent.pop();
-											}
-											_list.isUl = _list.element[0].tagName.toLowerCase() === "ul";
-											if (isUl !== _list.isUl) {
-												_resetList(isUl);
-												targetDom.append(_list.element);
-											}
-										}
-
-										_list.lastLevelMatch = _levelMatch;
-										if(indent !== _list.lastIndent.peek()) _list.lastIndent.push(indent);
-										_list.lastLi = angular.element("<li>");
-										_list.element.append(_list.lastLi);
-										_list.lastLi.html(el.html().replace(/<!(--|)\[if !supportLists\](--|)>[\s\S]*?<!(--|)\[endif\](--|)>/ig, ''));
-										el.remove();
-									}else{
-										_resetList(false);
-										targetDom.append(el);
-									}
-								}
-								var _unwrapElement = function(node){
-									node = angular.element(node);
-									for(var _n = node[0].childNodes.length - 1; _n >= 0; _n--) node.after(node[0].childNodes[_n]);
-									node.remove();
-								};
-
-								angular.forEach(targetDom.find('span'), function(node){
-									node.removeAttribute('lang');
-									if(node.attributes.length <= 0) _unwrapElement(node);
-								});
-								angular.forEach(targetDom.find('font'), _unwrapElement);
-								text = targetDom.html();
+                text = textFragment;
+                
+                //text = text.replace(/style='([\r\n]|.)*?'/gm, "");
+                text = text.replace(/class=Mso\w+/g, "");
+                text = text.replace(/<[/]*o:\w+>/g, "");
+                text = text.replace(/<\/?a(.|[\n\r])*?>/gm, "");
+                text = text.replace(/<([\r\n]|.)*?>/gm, function(text){
+                  return text.replace(/[\n\r]/gm, " ");
+                });
+                text = text.replace(/[\n\r]/gm, "");
+                text = text.replace(/<(table|tr|p|b|span|div|i)\s(.|[\n\r])*?>/gim, "<$1>");
+                text = text.replace(/(mso-)[-\w]+:([^;'])*;?/gi, "");
+                text = text.replace(/font-\w+:([^;'])*;?/gi, "");
+                text = text.replace(/ windowtext /g, " black ");
+                text = text.replace(/(width|valign)=[\d\w]+/g, "");
+                text = text.replace(/<([\r\n]|.)*?>/gm, function(text){
+                  return text.replace(/width:([^;'])*;?/g, "");
+                });
+                text = text.trim();
+                var htmlFix = "<html>\r\n<body>\r\n<!--StartFragment-->\r\n";
+                htmlFix += text;
+                htmlFix += "<!--EndFragment-->\r\n</body>\r\n</html>";
+                text = htmlFix;
 							}else{
 								// remove unnecessary chrome insert
 								text = text.replace(/<(|\/)meta[^>]*?>/ig, '');
@@ -630,16 +559,18 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 								text = text.replace(/<li(\s.*)?>.*<\/li(\s.*)?>/i, '<ul>$&</ul>');
 							}
 
-							// parse whitespace from plaintext input, starting with preceding spaces that get stripped on paste
-							text = text.replace(/^[ |\u00A0]+/gm, function (match) {
-								var result = '';
-								for (var i = 0; i < match.length; i++) {
-									result += '&nbsp;';
-								}
-								return result;
-							}).replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+              if(!fromHTML){
+                // parse whitespace from plaintext input, starting with preceding spaces that get stripped on paste
+                text = text.replace(/^[ |\u00A0]+/gm, function (match) {
+                  var result = '';
+                  for (var i = 0; i < match.length; i++) {
+                    result += '&nbsp;';
+                  }
+                  return result;
+                }).replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+              }
 
-							if(!fromMSWord){
+							if(!fromMSWord && !fromHTML){
 								text = text.replace(/\n|\r\n|\r/g, '<br />');
 							}
 
