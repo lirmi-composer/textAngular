@@ -1480,6 +1480,8 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
                 //text = text.replace(/style='([\r\n]|.)*?'/gm, "");
                 text = text.replace(/class=Mso\w+/g, "");
                 text = text.replace(/<[/]*o:\w+>/g, "");
+                text = text.replace(/<(img)\s(.|[\n\r])*?>/gim, "");
+                /*
                 text = text.replace(/<\/?a(.|[\n\r])*?>/gm, "");
                 text = text.replace(/<([\r\n]|.)*?>/gm, function(text){
                   return text.replace(/[\n\r]/gm, " ");
@@ -1493,6 +1495,7 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
                 text = text.replace(/<([\r\n]|.)*?>/gm, function(text){
                   return text.replace(/width:([^;'])*;?/g, "");
                 });
+                */
                 text = text.trim();
                 var htmlFix = "<html>\r\n<body>\r\n<!--StartFragment-->\r\n";
                 htmlFix += text;
