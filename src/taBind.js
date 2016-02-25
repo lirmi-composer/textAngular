@@ -507,21 +507,21 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
                 text = text.replace(/class=Mso\w+/g, "");
                 text = text.replace(/<[/]*o:\w+>/g, "");
                 text = text.replace(/<(img)\s(.|[\n\r])*?>/gim, "");
-                /*
+                
                 text = text.replace(/<\/?a(.|[\n\r])*?>/gm, "");
-                text = text.replace(/<([\r\n]|.)*?>/gm, function(text){
-                  return text.replace(/[\n\r]/gm, " ");
-                });
-                text = text.replace(/[\n\r]/gm, "");
-                text = text.replace(/<(table|tr|p|b|span|div|i)\s(.|[\n\r])*?>/gim, "<$1>");
-                text = text.replace(/(mso-)[-\w]+:([^;'])*;?/gi, "");
+                // text = text.replace(/<([\r\n]|.)*?>/gm, function(text){
+                  // return text.replace(/[\n\r]/gm, " ");
+                // });
+                // text = text.replace(/[\n\r]/gm, "");
+                // text = text.replace(/<(table|tr|p|b|span|div|i)\s(.|[\n\r])*?>/gim, "<$1>");
+                // text = text.replace(/(mso-)[-\w]+:([^;'])*;?/gi, "");
                 text = text.replace(/font-\w+:([^;'])*;?/gi, "");
-                text = text.replace(/ windowtext /g, " black ");
-                text = text.replace(/(width|valign)=[\d\w]+/g, "");
-                text = text.replace(/<([\r\n]|.)*?>/gm, function(text){
-                  return text.replace(/width:([^;'])*;?/g, "");
-                });
-                */
+                // text = text.replace(/ windowtext /g, " black ");
+                // text = text.replace(/(width|valign)=[\d\w]+/g, "");
+                // text = text.replace(/<([\r\n]|.)*?>/gm, function(text){
+                  // return text.replace(/width:([^;'])*;?/g, "");
+                // });
+                
                 text = text.trim();
                 var htmlFix = "<html>\r\n<body>\r\n<!--StartFragment-->\r\n";
                 htmlFix += text;
